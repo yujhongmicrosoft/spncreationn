@@ -10,7 +10,7 @@ param
     [string] $spnRole = "owner",
     
     [Parameter(Mandatory=$false, HelpMessage="Provide Azure environment name for your subscription")]
-    [string] $environmentName = "AzureUSGovernment"
+    [string] $environmentName = "<replace with environment name>"
 )
 
 function Get-AzureCmdletsVersion
