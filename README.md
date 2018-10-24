@@ -1,1 +1,1 @@
-# spncreationn
+## Script for creating Service Principal
