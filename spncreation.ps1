@@ -15,20 +15,20 @@ param
 
 function Get-AzureCmdletsVersion
 {
-    $module = Get-Module AzureRM -ListAvailable
+    $module = Get-Module Az -ListAvailable
     if($module)
     {
         return ($module).Version
     }
-    return (Get-Module Azure -ListAvailable).Version
+    return (Get-Module Az -ListAvailable).Version
 }
 
 function Get-Password
 {
     $currentAzurePSVersion = Get-AzureCmdletsVersion
-    $azureVersion511 = New-Object System.Version(5, 1, 1)
+    $minAzurePSVersion = New-Object System.Version(8, 0, 0)
 
-    if($currentAzurePSVersion -and $currentAzurePSVersion -ge $azureVersion511)
+    if($currentAzurePSVersion -and $currentAzurePSVersion -ge $minAzurePSVersion)
     {
         return $password
     }
@@ -41,57 +41,57 @@ function Get-Password
     }
 }
 
-#Initialize
+# Initialize
 $ErrorActionPreference = "Stop"
 $VerbosePreference = "SilentlyContinue"
 $userName = ($env:USERNAME).Replace(' ', '')
 $newguid = [guid]::NewGuid()
-$displayName = [String]::Format("VSTS.{0}.{1}", $userName, $newguid)
+$displayName = [String]::Format("AzDevOps.{0}.{1}", $userName, $newguid)
 $homePage = "http://" + $displayName
 $identifierUri = $homePage
 
 
-#Initialize subscription
-$isAzureModulePresent = Get-Module -Name AzureRM* -ListAvailable
+# Initialize subscription
+$isAzureModulePresent = Get-Module -Name Az -ListAvailable
 if ([String]::IsNullOrEmpty($isAzureModulePresent) -eq $true)
 {
-    Write-Output "Script requires AzureRM modules to be present. Obtain AzureRM from https://github.com/Azure/azure-powershell/releases. Please refer https://github.com/Microsoft/vsts-tasks/blob/master/Tasks/DeployAzureResourceGroup/README.md for recommended AzureRM versions." -Verbose
+    Write-Output "Script requires Azure PowerShell modules to be present. Obtain Azure PowerShell from https://github.com/Azure/azure-powershell/releases." -Verbose
     return
 }
 
-Import-Module -Name AzureRM.Profile
-Write-Output "Provide your credentials to access Azure subscription $subscriptionName" -Verbose
-Login-AzureRmAccount -SubscriptionName $subscriptionName -EnvironmentName $environmentName
-$azureSubscription = Get-AzureRmSubscription -SubscriptionName $subscriptionName
-$connectionName = $azureSubscription.SubscriptionName
+Import-Module -Name Az.Accounts
+Write-Output "Provide your credentials to access your Azure subscription $subscriptionName" -Verbose
+Connect-AzAccount -SubscriptionName $subscriptionName -EnvironmentName $environmentName
+$azureSubscription = Get-AzSubscription -SubscriptionName $subscriptionName
+$connectionName = $azureSubscription.Name
 $tenantId = $azureSubscription.TenantId
 $id = $azureSubscription.SubscriptionId
 
 
-#Create a new AD Application
+# Create a new AD Application
 Write-Output "Creating a new Application in AAD (App URI - $identifierUri)" -Verbose
 $password = Get-Password
-$azureAdApplication = New-AzureRmADApplication -DisplayName $displayName -HomePage $homePage -IdentifierUris $identifierUri -Password $password -Verbose
-$appId = $azureAdApplication.ApplicationId
+$azureAdApplication = New-AzADApplication -DisplayName $displayName -HomePage $homePage -Verbose
+$appId = $azureAdApplication.AppId
 Write-Output "Azure AAD Application creation completed successfully (Application Id: $appId)" -Verbose
 
 
-#Create new SPN
+# Create new SPN
 Write-Output "Creating a new SPN" -Verbose
-$spn = New-AzureRmADServicePrincipal -ApplicationId $appId
-$spnName = $spn.ServicePrincipalName
+$spn = New-AzADServicePrincipal -ApplicationId $appId
+$spnName = $spn.DisplayName
 Write-Output "SPN creation completed successfully (SPN Name: $spnName)" -Verbose
 
 
-#Assign role to SPN
+# Assign role to SPN
 Write-Output "Waiting for SPN creation to reflect in Directory before Role assignment"
 Start-Sleep 20
 Write-Output "Assigning role ($spnRole) to SPN App ($appId)" -Verbose
-New-AzureRmRoleAssignment -RoleDefinitionName $spnRole -ServicePrincipalName $appId
+New-AzRoleAssignment -RoleDefinitionName $spnRole -ServicePrincipalName $spn.AppId
 Write-Output "SPN role assignment completed successfully" -Verbose
 
 
-#Print the values
+# Print the values
 Write-Output "`nCopy and Paste below values for Service Connection" -Verbose
 Write-Output "***************************************************************************"
 Write-Output "Connection Name: $connectionName(SPN)"
