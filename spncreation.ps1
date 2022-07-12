@@ -71,7 +71,7 @@ $id = $azureSubscription.SubscriptionId
 # Create a new AD Application
 Write-Output "Creating a new Application in AAD (App URI - $identifierUri)" -Verbose
 $password = Get-Password
-$azureAdApplication = New-AzADApplication -DisplayName $displayName -HomePage $homePage -IdentifierUris $identifierUri -Password $password -Verbose
+$azureAdApplication = New-AzADApplication -DisplayName $displayName -HomePage $homePage -Verbose
 $appId = $azureAdApplication.AppId
 Write-Output "Azure AAD Application creation completed successfully (Application Id: $appId)" -Verbose
 
