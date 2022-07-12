@@ -61,7 +61,7 @@ if ([String]::IsNullOrEmpty($isAzureModulePresent) -eq $true)
 
 Import-Module -Name Az.Accounts
 Write-Output "Provide your credentials to access your Azure subscription $subscriptionName" -Verbose
-Login-AzAccount -SubscriptionName $subscriptionName -EnvironmentName $environmentName
+Connect-AzAccount -SubscriptionName $subscriptionName -EnvironmentName $environmentName
 $azureSubscription = Get-AzSubscription -SubscriptionName $subscriptionName
 $connectionName = $azureSubscription.Name
 $tenantId = $azureSubscription.TenantId
@@ -72,7 +72,7 @@ $id = $azureSubscription.SubscriptionId
 Write-Output "Creating a new Application in AAD (App URI - $identifierUri)" -Verbose
 $password = Get-Password
 $azureAdApplication = New-AzADApplication -DisplayName $displayName -HomePage $homePage -IdentifierUris $identifierUri -Password $password -Verbose
-$appId = $azureAdApplication.ApplicationId
+$appId = $azureAdApplication.AppId
 Write-Output "Azure AAD Application creation completed successfully (Application Id: $appId)" -Verbose
 
 
@@ -87,7 +87,7 @@ Write-Output "SPN creation completed successfully (SPN Name: $spnName)" -Verbose
 Write-Output "Waiting for SPN creation to reflect in Directory before Role assignment"
 Start-Sleep 20
 Write-Output "Assigning role ($spnRole) to SPN App ($appId)" -Verbose
-New-AzRoleAssignment -RoleDefinitionName $spnRole -ServicePrincipalName $appId
+New-AzRoleAssignment -RoleDefinitionName $spnRole -ServicePrincipalName $spn.AppId
 Write-Output "SPN role assignment completed successfully" -Verbose
 
 
