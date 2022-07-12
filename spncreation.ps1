@@ -26,7 +26,7 @@ function Get-AzureCmdletsVersion
 function Get-Password
 {
     $currentAzurePSVersion = Get-AzureCmdletsVersion
-    $minAzurePSVersion = New-Object System.Version(5, 6, 0)
+    $minAzurePSVersion = New-Object System.Version(8, 0, 0)
 
     if($currentAzurePSVersion -and $currentAzurePSVersion -ge $minAzurePSVersion)
     {
